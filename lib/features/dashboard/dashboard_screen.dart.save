@@ -1,0 +1,196 @@
+import 'package:flutter/material.dart';
+
+import '../../core/services/crypto_chess_cipher.dart';
+import '../../widgets/chess_board_widget.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final TextEditingController controller = TextEditingController();
+
+  String output = '';
+  String modeLabel = 'Crypto Engine bereit';
+
+  void encryptToChess() {
+    setState(() {
+      output = CryptoChessCipher.textToChessCode(controller.text);
+      modeLabel = 'Text wurde verschlüsselt';
+    });
+  }
+
+  void decryptFromChess() {
+    setState(() {
+      output = CryptoChessCipher.chessCodeToText(controller.text);
+      modeLabel = 'Schachcode wurde entschlüsselt';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0B0B),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171717),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFD4AF37)),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/logos/honey_badger_logo.png',
+                      width: 64,
+                      height: 64,
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Honey Badger Chess',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Words Hidden in Strategy',
+                            style: TextStyle(color: Color(0xFFD4AF37)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.security,
+                      color: Color(0xFFD4AF37),
+                      size: 32,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              Text(
+                modeLabel,
+                style: const TextStyle(
+                  color: Color(0xFFD4AF37),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'HALLO oder o2 h1 s3 s3 v3',
+                  filled: true,
+                  fillColor: const Color(0xFF1A1A1A),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              const Expanded(
+                child: ChessBoardWidget(),
+              ),
+
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: encryptToChess,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4AF37),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'ENCRYPT',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: decryptFromChess,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF222222),
+                        foregroundColor: const Color(0xFFD4AF37),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'DECRYPT',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171717),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFD4AF37)),
+                ),
+                child: SelectableText(
+                  output.isEmpty ? 'Crypto output erscheint hier...' : output,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFFD4AF37),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+Stack(
+  children: [
+
+    Positioned.fill(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.4,
+            colors: [
+              Color(0xFF1B2A3A),
+              Color(0xFF070B11),
+            ],
+          ),
+        ),
+      ),
+    ),
+flutter run -d linux
+
+
