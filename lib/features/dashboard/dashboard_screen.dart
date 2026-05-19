@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../core/services/offline_chess_cipher.dart';
 import '../../core/services/encrypted_session_service.dart';
+import '../../core/network/session_envelope_service.dart';
+import '../../core/network/i2p_overlay_service.dart';
 import '../../widgets/chess_board_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -23,11 +25,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String encryptedOutput = 'Offline Cipher erscheint hier...';
   String decryptedOutput = 'Entschlüsselter Text erscheint hier...';
   String visualMoveSource = '';
+  String envelopeStatus = 'Envelope: keiner';
 
   String filterMode = 'COLD-WAR';
   bool blackPerspective = false;
   EncryptedSession? activeSession;
   final sessionCodeController = TextEditingController();
+  final i2pService = I2POverlayService();
+  String i2pStatus = 'I2P: nicht geprüft';
 
   CipherProfile get profile {
     final session = activeSession;
@@ -57,12 +62,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void decrypt() {
+    final envelope = SessionEnvelopeService.unpack(decryptController.text);
+
+    final payload = envelope == null
+        ? decryptController.text
+        : envelope.payload;
+
     setState(() {
+      if (envelope == null) {
+        envelopeStatus = 'Envelope: keiner';
+      } else if (activeSession == null) {
+        envelopeStatus = 'Envelope erkannt · keine aktive Session';
+      } else if (envelope.sessionFingerprint == activeSession!.fingerprint) {
+        envelopeStatus = 'Envelope OK · Session passt';
+      } else {
+        envelopeStatus = 'Envelope WARNUNG · Session passt NICHT';
+      }
+
       decryptedOutput = OfflineChessCipher.decryptFromMoves(
-        decryptController.text,
+        payload,
         profile,
       );
-      visualMoveSource = decryptController.text;
+
+      visualMoveSource = payload;
     });
   }
 
@@ -71,10 +93,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void copyEncrypted() {
-    Clipboard.setData(ClipboardData(text: encryptedOutput));
+    final payload = activeSession == null
+        ? encryptedOutput
+        : SessionEnvelopeService.pack(
+            sessionFingerprint: activeSession!.fingerprint,
+            encryptedPayload: encryptedOutput,
+          );
+
+    Clipboard.setData(ClipboardData(text: payload));
+
+    setState(() {
+      decryptController.text = payload;
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cipher kopiert')),
+      const SnackBar(content: Text('Cipher/Envelope kopiert und in Decrypt eingefügt')),
     );
+  }
+
+  Future<void> checkI2P() async {
+    setState(() {
+      i2pStatus = 'I2P: prüfe...';
+    });
+
+    final state = await i2pService.checkLocalRouter();
+
+    setState(() {
+      i2pStatus = state == I2PConnectionState.available
+          ? 'I2P: verfügbar'
+          : 'I2P: nicht verfügbar';
+    });
   }
 
   void createSession() {
@@ -224,6 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         decryptController: decryptController,
                         encryptedOutput: encryptedOutput,
                         decryptedOutput: decryptedOutput,
+                        envelopeStatus: envelopeStatus,
                         onEncrypt: encrypt,
                         onDecrypt: decrypt,
                         onCopy: copyEncrypted,
@@ -329,6 +378,7 @@ class _RightCipherPanel extends StatelessWidget {
   final TextEditingController decryptController;
   final String encryptedOutput;
   final String decryptedOutput;
+  final String envelopeStatus;
   final VoidCallback onEncrypt;
   final VoidCallback onDecrypt;
   final VoidCallback onCopy;
@@ -338,6 +388,7 @@ class _RightCipherPanel extends StatelessWidget {
     required this.decryptController,
     required this.encryptedOutput,
     required this.decryptedOutput,
+    required this.envelopeStatus,
     required this.onEncrypt,
     required this.onDecrypt,
     required this.onCopy,
@@ -376,6 +427,34 @@ class _RightCipherPanel extends StatelessWidget {
             onPressed: onDecrypt,
             icon: const Icon(Icons.lock_open, size: 14),
             label: const Text('DECRYPT', style: TextStyle(fontSize: 10)),
+          ),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: envelopeStatus.contains('OK')
+                  ? const Color(0xFF0F2A18)
+                  : envelopeStatus.contains('WARNUNG')
+                      ? const Color(0xFF3A1111)
+                      : const Color(0xFF050A10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: envelopeStatus.contains('OK')
+                    ? Colors.greenAccent
+                    : envelopeStatus.contains('WARNUNG')
+                        ? Colors.redAccent
+                        : const Color(0xFF33465A),
+              ),
+            ),
+            child: Text(
+              envelopeStatus,
+              style: const TextStyle(
+                color: Color(0xFFFFD76A),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           Expanded(child: _Output(text: decryptedOutput)),
         ],
