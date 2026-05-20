@@ -6,6 +6,7 @@ import '../../core/services/encrypted_session_service.dart';
 import '../../core/network/session_envelope_service.dart';
 import '../../core/network/i2p_overlay_service.dart';
 import '../../widgets/chess_board_widget.dart';
+import '../../core/rendering/model_asset_status.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
