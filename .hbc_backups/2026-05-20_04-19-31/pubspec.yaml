@@ -21,7 +21,3 @@ flutter:
 
   assets:
     - assets/logos/
-    - assets/3d/pieces/
-    - assets/3d/boards/
-    - assets/3d/materials/
-    - assets/3d/environment/
