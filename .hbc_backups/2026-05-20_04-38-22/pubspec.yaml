@@ -1,0 +1,27 @@
+name: honey_badger_chess
+description: Honey Badger Chess App
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logos/
+    - assets/3d/pieces/
+    - assets/3d/boards/
+    - assets/3d/materials/
+    - assets/3d/environment/
