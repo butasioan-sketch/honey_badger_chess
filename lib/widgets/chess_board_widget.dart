@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/rendering/piece_renderer.dart';
+import '../core/rendering/piece_render_mode.dart';
 
 class ChessBoardWidget extends StatefulWidget {
   final List<String> visualMoves;
