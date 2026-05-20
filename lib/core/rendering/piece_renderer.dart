@@ -53,11 +53,34 @@ class _Model3DPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Unicode3DPiece(
-      piece: piece,
-      size: size,
-      white: white,
-      active: active,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _Unicode3DPiece(
+          piece: piece,
+          size: size,
+          white: white,
+          active: active,
+        ),
+        Positioned(
+          bottom: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              '3D',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
