@@ -41,6 +41,7 @@ class ChessCodeService {
 
       final file = part[0].toLowerCase();
       final rank = int.tryParse(part.substring(1));
+
       if (rank == null) continue;
 
       final col = file.codeUnitAt(0) - 97;

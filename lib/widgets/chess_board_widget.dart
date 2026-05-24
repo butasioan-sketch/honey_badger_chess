@@ -136,7 +136,7 @@ class _ChessBoardWidgetState extends State<ChessBoardWidget> {
     return LayoutBuilder(
       builder: (context, c) {
         final availableW = c.maxWidth;
-        final availableH = c.maxHeight - 78;
+        final availableH = c.maxHeight - 118;
         final boardSize = min(availableW * 0.99, availableH * 0.99);
 
         final matrix = Matrix4.identity()
@@ -356,7 +356,7 @@ class _ChessBoardWidgetState extends State<ChessBoardWidget> {
                   ? '${whiteView ? "WHITE" : "BLACK"} VIEW · CAM ${cameraPreset + 1} · STYLE ${colorProfile + 1} · ROT ${(rotation * 57.2958).toStringAsFixed(0)}° · SPD ${playbackSpeedMs}ms · TILT ${tilt.toStringAsFixed(2)}'
                   : playbackIndex >= 0
                       ? 'PLAYBACK ${playbackIndex + 1}/${widget.visualMoves.length} · ${widget.visualMoves[playbackIndex]}'
-                      : 'VISUAL CIPHER · ${widget.visualMoves.take(5).join("  ")}',
+                      : 'VISUAL CIPHER READY · PLAY drücken · ${widget.visualMoves.length} Moves',
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Color(0xFFB08A2E),
@@ -384,42 +384,61 @@ class _ChessBoardWidgetState extends State<ChessBoardWidget> {
 
             const SizedBox(height: 3),
 
-            Container(
-              height: 34,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF101820),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF263544)),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _MiniLabel('VIEW'),
-                    _ControlButton('⟲', () => setState(() => rotation -= pi / 8)),
-                    _ControlButton('⟳', () => setState(() => rotation += pi / 8)),
-                    _ControlButton('CAM', nextCameraPreset),
-                    _ControlButton(whiteView ? 'WHITE' : 'BLACK', () => setState(() => whiteView = !whiteView)),
-
-                    _MiniLabel('3D'),
-                    _ControlButton('TILT+', () => setState(() => tilt -= 0.04)),
-                    _ControlButton('TILT-', () => setState(() => tilt += 0.04)),
-                    _ControlButton('STYLE', () => setState(() => colorProfile = (colorProfile + 1) % 3)),
-
-                    _MiniLabel('LAYER'),
-                    _ControlButton(showPieces ? 'PIECES' : 'NO PIECES', () => setState(() => showPieces = !showPieces)),
-                    _ControlButton(showCoords ? 'COORDS' : 'NO COORDS', () => setState(() => showCoords = !showCoords)),
-
-                    _MiniLabel('CIPHER'),
-                    _ControlButton('SLOW', () => setState(() => playbackSpeedMs = 1300)),
-                    _ControlButton('FAST', () => setState(() => playbackSpeedMs = 420)),
-                    _ControlButton('PLAY', startPlayback),
-                    _ControlButton('STOP', stopPlayback),
-                    _ControlButton('RESET', resetView),
-                  ],
+            Column(
+              children: [
+                Container(
+                  height: 76,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF101820),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF263544)),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _MiniLabel('CAMERA'),
+                        _ControlButton('⟲', () => setState(() => rotation -= pi / 8)),
+                        _ControlButton('⟳', () => setState(() => rotation += pi / 8)),
+                        _ControlButton('CAM', nextCameraPreset),
+                        _ControlButton('TILT+', () => setState(() => tilt -= 0.04)),
+                        _ControlButton('TILT-', () => setState(() => tilt += 0.04)),
+                        _ControlButton(whiteView ? 'WHITE' : 'BLACK', () => setState(() => whiteView = !whiteView)),
+                        _ControlButton('RESET', resetView),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 4),
+
+                Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF101820),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF263544)),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _MiniLabel('CIPHER'),
+                        _ControlButton('PLAY', startPlayback),
+                        _ControlButton('STOP', stopPlayback),
+                        _ControlButton('SLOW', () => setState(() => playbackSpeedMs = 1300)),
+                        _ControlButton('FAST', () => setState(() => playbackSpeedMs = 420)),
+                        _MiniLabel('LAYER'),
+                        _ControlButton(showPieces ? 'PIECES' : 'NO PIECES', () => setState(() => showPieces = !showPieces)),
+                        _ControlButton(showCoords ? 'COORDS' : 'NO COORDS', () => setState(() => showCoords = !showCoords)),
+                        _ControlButton('STYLE', () => setState(() => colorProfile = (colorProfile + 1) % 3)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );
