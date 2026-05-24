@@ -1,0 +1,407 @@
+===== HONEY BADGER CHESS LAGEBERICHT =====
+Zeit: So 24. Mai 17:22:24 CEST 2026
+
+1) ORDNER
+/home/jonny/honey_badger_chess
+
+2) FLUTTER VERSION
+Flutter 3.41.9 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 00b0c91f06 (vor 4 Wochen) • 2026-04-29 10:03:19 -0700
+Engine • hash 9161402dc0e134b3fb5adee5046b6e84b1a5e1c1 (revision 42d3d75a56) (25 days ago) • 2026-04-28 17:31:55.000Z
+Tools • Dart 3.11.5 • DevTools 2.54.2
+
+3) GIT STATUS
+?? reports/
+?? scripts/hbc_lagebericht.sh
+
+4) GIT BRANCH / REMOTE
+* main
+origin	git@github.com:butasioan-sketch/honey_badger_chess.git (fetch)
+origin	git@github.com:butasioan-sketch/honey_badger_chess.git (push)
+
+5) DATEIEN LIB
+lib/core/models/message_model.dart
+lib/core/network/i2p_overlay_service.dart
+lib/core/network/session_envelope_service.dart
+lib/core/rendering/model_asset_status.dart
+lib/core/rendering/piece_model_assets.dart
+lib/core/rendering/piece_renderer.dart
+lib/core/rendering/piece_render_mode.dart
+lib/core/services/chess_codec.dart
+lib/core/services/chess_code_service.dart
+lib/core/services/crypto_chess_cipher.dart
+lib/core/services/encrypted_session_service.dart
+lib/core/services/offline_chess_cipher.dart
+lib/core/theme/app_theme.dart
+lib/features/board_screen.dart
+lib/features/chat_screen.dart
+lib/features/dashboard/dashboard_screen.dart
+lib/features/dashboard/dashboard_screen.dart.save
+lib/features/decoder/decoder_screen.dart
+lib/features/encoder/encoder_screen.dart
+lib/features/profile_screen.dart
+lib/main.dart
+lib/widgets/chess_board_widget.dart
+
+6) ASSETS
+assets/3d/README.md
+assets/logos/honey_badger_logo.png
+
+7) SCRIPTS
+scripts/hbc_3d_assets_check.sh
+scripts/hbc_android_setup.sh
+scripts/hbc_backup_run.sh
+scripts/hbc_build_android.sh
+scripts/hbc_build_linux.sh
+scripts/hbc_doctor.sh
+scripts/hbc_github_wizard.sh
+scripts/hbc_git_setup.sh
+scripts/hbc_install_desktop.sh
+scripts/hbc_lagebericht.sh
+scripts/hbc_package_linux.sh
+scripts/hbc_push.sh
+scripts/hbc_release.sh
+scripts/hbc_restore_latest.sh
+scripts/hbc_run_release.sh
+scripts/hbc_status.sh
+scripts/hbc_ui_check.sh
+scripts/hbc_uninstall_desktop.sh
+
+8) PUBSPEC ASSETS
+1:name: honey_badger_chess
+11:  flutter:
+19:flutter:
+23:    - assets/logos/
+24:    - assets/3d/pieces/
+25:    - assets/3d/boards/
+26:    - assets/3d/materials/
+27:    - assets/3d/environment/
+
+9) WICHTIGE IMPORTS
+--- main.dart ---
+import 'package:flutter/material.dart';
+
+import 'core/theme/app_theme.dart';
+import 'features/dashboard/dashboard_screen.dart';
+
+void main() {
+  runApp(const HoneyBadgerChessApp());
+}
+
+class HoneyBadgerChessApp extends StatelessWidget {
+  const HoneyBadgerChessApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Honey Badger Chess',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: const DashboardScreen(),
+    );
+  }
+}
+
+--- dashboard imports ---
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../core/services/offline_chess_cipher.dart';
+import '../../core/services/encrypted_session_service.dart';
+import '../../core/network/session_envelope_service.dart';
+import '../../core/network/i2p_overlay_service.dart';
+import '../../widgets/chess_board_widget.dart';
+
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final encryptController = TextEditingController();
+  final decryptController = TextEditingController();
+
+  final weekKeyController = TextEditingController(text: 'WEEK-01-HONEY');
+  final gameSeedController = TextEditingController(text: 'FISCHER-PATTERN-001');
+  final profileCodeController = TextEditingController();
+
+  String encryptedOutput = 'Offline Cipher erscheint hier...';
+  String decryptedOutput = 'Entschlüsselter Text erscheint hier...';
+  String visualMoveSource = '';
+  String envelopeStatus = 'Envelope: keiner';
+  String envelopeDetails = '';
+
+  String filterMode = 'COLD-WAR';
+  bool blackPerspective = false;
+  EncryptedSession? activeSession;
+  final sessionCodeController = TextEditingController();
+  final i2pService = I2POverlayService();
+  String i2pStatus = 'I2P: nicht geprüft';
+  String transportMode = 'OFFLINE';
+
+  CipherProfile get profile {
+    final session = activeSession;
+
+--- board imports ---
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
+import '../core/rendering/piece_renderer.dart';
+
+class ChessBoardWidget extends StatefulWidget {
+  final List<String> visualMoves;
+
+  const ChessBoardWidget({
+    super.key,
+    this.visualMoves = const [],
+  });
+
+  @override
+  State<ChessBoardWidget> createState() => _ChessBoardWidgetState();
+}
+
+class _ChessBoardWidgetState extends State<ChessBoardWidget> {
+  double rotation = 0;
+  double tilt = -0.36;
+  bool whiteView = true;
+  bool showPieces = true;
+  bool showCoords = true;
+  int colorProfile = 0;
+  int cameraPreset = 0;
+
+  int playbackIndex = -1;
+  int playbackSpeedMs = 850;
+  Timer? playbackTimer;
+
+  final Map<String, String> pieces = {
+    'a8':'♜','b8':'♞','c8':'♝','d8':'♛','e8':'♚','f8':'♝','g8':'♞','h8':'♜',
+    'a7':'♟','b7':'♟','c7':'♟','d7':'♟','e7':'♟','f7':'♟','g7':'♟','h7':'♟',
+    'a2':'♙','b2':'♙','c2':'♙','d2':'♙','e2':'♙','f2':'♙','g2':'♙','h2':'♙',
+    'a1':'♖','b1':'♘','c1':'♗','d1':'♕','e1':'♔','f1':'♗','g1':'♘','h1':'♖',
+  };
+
+  bool whitePiece(String? p) => ['♔','♕','♖','♗','♘','♙'].contains(p);
+
+  void resetView() {
+
+10) CONTROL CHECK
+356:                  ? '${whiteView ? "WHITE" : "BLACK"} VIEW · CAM ${cameraPreset + 1} · STYLE ${colorProfile + 1} · ROT ${(rotation * 57.2958).toStringAsFixed(0)}° · SPD ${playbackSpeedMs}ms · TILT ${tilt.toStringAsFixed(2)}'
+358:                      ? 'PLAYBACK ${playbackIndex + 1}/${widget.visualMoves.length} · ${widget.visualMoves[playbackIndex]}'
+359:                      : 'VISUAL CIPHER READY · PLAY drücken · ${widget.visualMoves.length} Moves',
+401:                        _MiniLabel('CAMERA'),
+404:                        _ControlButton('CAM', nextCameraPreset),
+405:                        _ControlButton('TILT+', () => setState(() => tilt -= 0.04)),
+406:                        _ControlButton('TILT-', () => setState(() => tilt += 0.04)),
+429:                        _ControlButton('PLAY', startPlayback),
+430:                        _ControlButton('STOP', stopPlayback),
+
+11) RENDERING CHECK
+lib/core/rendering/piece_render_mode.dart
+enum PieceRenderMode {
+  unicode3d,
+  model3d,
+}
+
+class PieceRenderConfig {
+  static PieceRenderMode mode = PieceRenderMode.unicode3d;
+}
+lib/core/rendering/piece_renderer.dart
+import 'package:flutter/material.dart';
+
+import 'piece_render_mode.dart';
+
+class PieceRenderer extends StatelessWidget {
+  final String piece;
+  final double size;
+  final bool white;
+  final bool active;
+
+  const PieceRenderer({
+    super.key,
+    required this.piece,
+    required this.size,
+    required this.white,
+    required this.active,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (PieceRenderConfig.mode) {
+      case PieceRenderMode.model3d:
+        return _Model3DPlaceholder(
+          piece: piece,
+          size: size,
+          white: white,
+          active: active,
+        );
+
+      case PieceRenderMode.unicode3d:
+        return _Unicode3DPiece(
+          piece: piece,
+          size: size,
+          white: white,
+          active: active,
+        );
+    }
+  }
+}
+
+lib/core/rendering/model_asset_status.dart
+import 'piece_model_assets.dart';
+
+class ModelAssetStatus {
+  static const expectedAssets = [
+    'assets/3d/pieces/king.glb',
+    'assets/3d/pieces/queen.glb',
+    'assets/3d/pieces/rook.glb',
+    'assets/3d/pieces/bishop.glb',
+    'assets/3d/pieces/knight.glb',
+    'assets/3d/pieces/pawn.glb',
+  ];
+
+  static String expectedForPiece(String piece) {
+    return PieceModelAssets.assetFor(piece);
+  }
+
+  static String get summary {
+    return '3D Models: prepared, waiting for GLB assets';
+  }
+}
+lib/core/rendering/piece_model_assets.dart
+class PieceModelAssets {
+  static String assetFor(String piece) {
+    switch (piece) {
+      case '♔':
+      case '♚':
+        return 'assets/3d/pieces/king.glb';
+
+      case '♕':
+      case '♛':
+        return 'assets/3d/pieces/queen.glb';
+
+      case '♖':
+      case '♜':
+        return 'assets/3d/pieces/rook.glb';
+
+      case '♗':
+      case '♝':
+        return 'assets/3d/pieces/bishop.glb';
+
+      case '♘':
+      case '♞':
+        return 'assets/3d/pieces/knight.glb';
+
+      case '♙':
+      case '♟':
+        return 'assets/3d/pieces/pawn.glb';
+
+      default:
+        return 'assets/3d/pieces/pawn.glb';
+    }
+  }
+}
+
+12) NETWORK CHECK
+lib/core/network/session_envelope_service.dart
+import 'dart:convert';
+
+import 'i2p_overlay_service.dart';
+
+class SessionEnvelopeService {
+  static String pack({
+    required String sessionFingerprint,
+    required String encryptedPayload,
+    String routeHint = 'OFFLINE',
+  }) {
+    final envelope = I2PMessageEnvelope(
+      sessionFingerprint: sessionFingerprint,
+      payload: encryptedPayload,
+      timestamp: DateTime.now().toIso8601String(),
+      routeHint: routeHint,
+    );
+
+    return base64Url.encode(
+      utf8.encode(
+        jsonEncode(envelope.toJson()),
+      ),
+    );
+  }
+
+  static I2PMessageEnvelope? unpack(String code) {
+    try {
+      final raw = utf8.decode(base64Url.decode(code.trim()));
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return I2PMessageEnvelope.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+}
+lib/core/network/i2p_overlay_service.dart
+import 'dart:async';
+import 'dart:io';
+
+enum I2PConnectionState {
+  offline,
+  checking,
+  available,
+  unavailable,
+}
+
+class I2PMessageEnvelope {
+  final String sessionFingerprint;
+  final String payload;
+  final String timestamp;
+  final String routeHint;
+  final bool burned;
+
+  const I2PMessageEnvelope({
+    required this.sessionFingerprint,
+    required this.payload,
+    required this.timestamp,
+    required this.routeHint,
+    this.burned = false,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'sessionFingerprint': sessionFingerprint,
+      'payload': payload,
+      'timestamp': timestamp,
+      'routeHint': routeHint,
+      'burned': burned,
+    };
+  }
+
+  factory I2PMessageEnvelope.fromJson(Map<String, dynamic> json) {
+    return I2PMessageEnvelope(
+      sessionFingerprint: json['sessionFingerprint'] ?? '',
+      payload: json['payload'] ?? '',
+      timestamp: json['timestamp'] ?? '',
+      routeHint: json['routeHint'] ?? '',
+      burned: json['burned'] == true,
+    );
+  }
+}
+
+class I2POverlayService {
+  I2PConnectionState state = I2PConnectionState.offline;
+
+  Future<bool> _canConnect(int port) async {
+
+13) FLUTTER ANALYZE
+Resolving dependencies...
+Downloading packages...
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  test_api 0.7.10 (0.7.12 available)
+  vector_math 2.2.0 (2.3.0 available)
+Got dependencies!
+4 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing honey_badger_chess...                                 
+No issues found! (ran in 1.7s)
+
+===== ENDE LAGEBERICHT =====
